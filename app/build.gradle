@@ -31,6 +31,15 @@ android {
     }
 
     signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
+        }
         release {
             // NOTE: v1 is still needed, as v2 is only supported since API 24
             enableV1Signing true
@@ -46,6 +55,7 @@ android {
             signingConfig signingConfigs.release
         }
         debug {
+            signingConfig signingConfigs.debug
             // Keep same app ID as release so SukiSU/KernelSU and system permissions align with stock
             // applicationIdSuffix '.debug'
             versionNameSuffix '-beta'
