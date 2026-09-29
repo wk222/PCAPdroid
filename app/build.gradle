@@ -104,10 +104,12 @@ android {
         }
     }
     namespace = 'com.emanuelef.remote_capture'
+}
 
-    applicationVariants.configureEach { variant ->
-        variant.outputs.configureEach { output ->
-            output.outputFileName = "手机抓包工具-${variant.versionName}-${variant.name}.apk"
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName.set("手机抓包工具-${variant.versionName.get()}-${variant.name}.apk")
         }
     }
 }
