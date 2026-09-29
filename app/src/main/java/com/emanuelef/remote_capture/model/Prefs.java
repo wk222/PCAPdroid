@@ -244,7 +244,7 @@ public class Prefs {
             return null;
         return lang;
     }
-    public static boolean isRootCaptureEnabled(SharedPreferences p) { return(Utils.isRootAvailable() && p.getBoolean(PREF_ROOT_CAPTURE, false)); }
+    public static boolean isRootCaptureEnabled(SharedPreferences p) { return p.getBoolean(PREF_ROOT_CAPTURE, false); }
     public static boolean isPcapdroidMetadataEnabled(SharedPreferences p) { return(p.getBoolean(PREF_DUMP_EXTENSIONS, false)); }
     public static String getCaptureInterface(SharedPreferences p) { return(p.getString(PREF_CAPTURE_INTERFACE, "@inet")); }
     public static boolean isMalwareDetectionEnabled(Context ctx, SharedPreferences p) {

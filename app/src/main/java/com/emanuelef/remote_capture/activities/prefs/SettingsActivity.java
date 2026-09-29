@@ -337,13 +337,11 @@ public class SettingsActivity extends BaseActivity implements PreferenceFragment
             refreshInterfaces();
 
             mRootCaptureEnabled = requirePreference(Prefs.PREF_ROOT_CAPTURE);
-            if(Utils.isRootAvailable()) {
-                mRootCaptureEnabled.setOnPreferenceChangeListener((preference, newValue) -> {
-                    rootCaptureHideShow((Boolean) newValue);
-                    return checkDecrpytionWithRoot((Boolean) newValue, mTlsDecryption.isChecked());
-                });
-            } else
-                mRootCaptureEnabled.setVisible(false);
+            mRootCaptureEnabled.setVisible(true);
+            mRootCaptureEnabled.setOnPreferenceChangeListener((preference, newValue) -> {
+                rootCaptureHideShow((Boolean) newValue);
+                return checkDecrpytionWithRoot((Boolean) newValue, mTlsDecryption.isChecked());
+            });
 
             mRestartOnDisconnect = requirePreference(Prefs.PREF_RESTART_ON_DISCONNECT);
             mRestartOnDisconnect.setVisible(VpnReconnectService.isAvailable());

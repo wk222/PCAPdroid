@@ -1075,26 +1075,7 @@ public class Utils {
     }
 
     public static boolean isRootAvailable() {
-        if(rootAvailable == null) {
-            String path = System.getenv("PATH");
-            rootAvailable = false;
-
-            if(path != null) {
-                Log.d("isRootAvailable", "PATH = " + path);
-
-                for(String part : path.split(":")) {
-                    File f = new File(part + "/su");
-
-                    if(f.exists()) {
-                        Log.d("isRootAvailable", "'su' binary found at " + f.getAbsolutePath());
-                        rootAvailable = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return rootAvailable;
+        return true;
     }
 
     public static void copyToClipboard(Context ctx, String contents) {
