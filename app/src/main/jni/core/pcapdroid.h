@@ -137,6 +137,7 @@ typedef struct {
     uint8_t update_type;
 
     /* RTT and timing metrics */
+    int8_t tcp_client_dir; /* 0/1: which dir is the TCP client; -1 unknown */
     uint64_t syn_ts_ms;
     uint64_t last_client_req_ms;
     uint32_t client_max_seq;

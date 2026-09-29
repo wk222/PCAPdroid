@@ -215,8 +215,7 @@ int start_subprocess(const char *prog, const char *args, bool as_root, int* out_
 
     if((pid = fork()) == 0) {
         // child
-        // Use a broader PATH search and su invocation fallback for KernelSU / APatch / SukiSU
-        char *argp[] = {"sh", "-c", as_root ? "PATH=$PATH:/system/bin:/system/xbin:/sbin:/data/adb/ksu/bin:/data/adb/ap/bin su" : "sh", NULL};
+        char *argp[] = {"sh", "-c", as_root ? "su" : "sh", NULL};
 
         close(in_p[1]);
         dup2(in_p[0], STDIN_FILENO);

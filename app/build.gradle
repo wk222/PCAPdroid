@@ -104,6 +104,12 @@ android {
         }
     }
     namespace = 'com.emanuelef.remote_capture'
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach { output ->
+            output.outputFileName = "手机抓包工具-${variant.versionName}-${variant.name}.apk"
+        }
+    }
 }
 
 // Build zstd JNI for the host platform (needed by unit tests)

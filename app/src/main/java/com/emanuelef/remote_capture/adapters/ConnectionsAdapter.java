@@ -139,6 +139,8 @@ public class ConnectionsAdapter extends RecyclerView.Adapter<ConnectionsAdapter.
 
             if(conn.tcp_rtt >= 0)
                 l7Text = l7Text + " | RTT " + conn.tcp_rtt + "ms";
+            if(conn.tcp_connect_time >= 0)
+                l7Text = l7Text + " | 握手 " + conn.tcp_connect_time + "ms";
             if(conn.server_wait >= 0) {
                 if(conn.server_wait >= 1000)
                     l7Text = l7Text + String.format(java.util.Locale.US, " | 等待 %.1fs", conn.server_wait / 1000.0f);

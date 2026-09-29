@@ -350,52 +350,48 @@ static void update_connection_status(pcapdroid_t *pd, pcap_conn_t *conn, zdtun_p
       data->tcp_flags[dir] |= flags;
       uint8_t seen_flags = data->tcp_flags[0] & data->tcp_flags[1];
 
-      // RTT and timing tracking:
-      // dir == 0: client -> server
-      // dir == 1: server -> client
-      if(dir == 0) {
-          // Client SYN
-          if((flags & TH_SYN) && !(flags & TH_ACK)) {
+      // RTT / timing: hotspot & @inet capture may mis-classify TX/RX; handshake is direction-agnostic.
+      if((flags & TH_SYN) && !(flags & TH_ACK)) {
+          if(data->syn_ts_ms == 0)
               data->syn_ts_ms = pkt_ms;
+          if(data->tcp_client_dir < 0)
+              data->tcp_client_dir = (int8_t) dir;
+      } else if((flags & (TH_SYN | TH_ACK)) == (TH_SYN | TH_ACK)) {
+          if(data->syn_ts_ms > 0 && data->tcp_rtt_ms < 0) {
+              data->tcp_rtt_ms = (int32_t)(pkt_ms - data->syn_ts_ms);
+              data->update_type |= CONN_UPDATE_METRICS;
           }
-          // Client final ACK of 3-way handshake
-          else if((flags & TH_ACK) && data->connect_time_ms < 0 && data->syn_ts_ms > 0) {
+      } else if((flags & TH_ACK) && !(flags & TH_SYN) && data->connect_time_ms < 0
+                && data->syn_ts_ms > 0 && pkt->l7_len == 0) {
+          const uint8_t syn_ack_flags = TH_SYN | TH_ACK;
+          if((seen_flags & syn_ack_flags) == syn_ack_flags) {
               data->connect_time_ms = (int32_t)(pkt_ms - data->syn_ts_ms);
               data->update_type |= CONN_UPDATE_METRICS;
           }
+      }
 
-          // Client request with application payload
-          if(pkt->l7_len > 0) {
-              data->last_client_req_ms = pkt_ms;
-              if(data->client_max_seq > 0 && seq < data->client_max_seq) {
-                  data->retransmits++;
-                  data->update_type |= CONN_UPDATE_METRICS;
-              } else if(seq > data->client_max_seq) {
-                  data->client_max_seq = seq;
-              }
-          }
-      } else {
-          // Server SYN+ACK response to SYN
-          if((flags & (TH_SYN | TH_ACK)) == (TH_SYN | TH_ACK)) {
-              if(data->syn_ts_ms > 0 && data->tcp_rtt_ms < 0) {
-                  data->tcp_rtt_ms = (int32_t)(pkt_ms - data->syn_ts_ms);
-                  data->update_type |= CONN_UPDATE_METRICS;
-              }
-          }
+      const bool from_client = (data->tcp_client_dir < 0) ? (dir == 0) : (dir == (uint8_t) data->tcp_client_dir);
+      const bool from_server = !from_client;
 
-          // Server response with payload after client request (TTFB / Server wait)
-          if(pkt->l7_len > 0) {
-              if(data->last_client_req_ms > 0) {
-                  data->server_wait_ms = (int32_t)(pkt_ms - data->last_client_req_ms);
-                  data->last_client_req_ms = 0; // Handled this transaction
-                  data->update_type |= CONN_UPDATE_METRICS;
-              }
-              if(data->server_max_seq > 0 && seq < data->server_max_seq) {
-                  data->retransmits++;
-                  data->update_type |= CONN_UPDATE_METRICS;
-              } else if(seq > data->server_max_seq) {
-                  data->server_max_seq = seq;
-              }
+      if(from_client && pkt->l7_len > 0) {
+          data->last_client_req_ms = pkt_ms;
+          if(data->client_max_seq > 0 && seq < data->client_max_seq) {
+              data->retransmits++;
+              data->update_type |= CONN_UPDATE_METRICS;
+          } else if(seq > data->client_max_seq) {
+              data->client_max_seq = seq;
+          }
+      } else if(from_server && pkt->l7_len > 0) {
+          if(data->last_client_req_ms > 0) {
+              data->server_wait_ms = (int32_t)(pkt_ms - data->last_client_req_ms);
+              data->last_client_req_ms = 0;
+              data->update_type |= CONN_UPDATE_METRICS;
+          }
+          if(data->server_max_seq > 0 && seq < data->server_max_seq) {
+              data->retransmits++;
+              data->update_type |= CONN_UPDATE_METRICS;
+          } else if(seq > data->server_max_seq) {
+              data->server_max_seq = seq;
           }
       }
 

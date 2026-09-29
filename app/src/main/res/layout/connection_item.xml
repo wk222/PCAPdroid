@@ -149,11 +149,15 @@
             android:textSize="13sp"
             android:layout_marginStart="4dp"
             app:layout_goneMarginStart="0dp"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:ellipsize="end"
+            app:layout_constrainedWidth="true"
             app:layout_constraintTop_toBottomOf="@id/app_name_layout"
             app:layout_constraintStart_toEndOf="@id/decryption_status"
-            tools:text="HTTP, 80" />
+            app:layout_constraintEnd_toStartOf="@id/last_seen"
+            tools:text="HTTP, 80 | RTT 32ms | 握手 45ms | 等待 1.2s" />
 
         <LinearLayout
             android:layout_width="match_parent"

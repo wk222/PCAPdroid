@@ -183,7 +183,7 @@ static jobject getConnUpdate(pcapdroid_t *pd, const conn_and_tuple_t *conn) {
                                     (data->status & 0xFF) /* 8 bits */);
         failed = jniCheckException(env);
     }
-    if(!failed && (data->update_type & (CONN_UPDATE_STATS | CONN_UPDATE_METRICS))) {
+    if(!failed && (data->update_type & CONN_UPDATE_METRICS)) {
         if(mids.connUpdateSetMetrics) {
             (*env)->CallVoidMethod(env, update, mids.connUpdateSetMetrics,
                                    data->tcp_rtt_ms,

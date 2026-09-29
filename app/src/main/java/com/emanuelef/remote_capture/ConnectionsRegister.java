@@ -274,11 +274,12 @@ public class ConnectionsRegister {
                 ConnectionDescriptor conn = mItemsRing[pos];
                 assert(conn.incr_id == id);
 
-                // update the app stats
                 AppStats stats = getAppsStatsOrCreate(conn.uid);
-                stats.sentBytes += update.sent_bytes - conn.sent_bytes;
-                stats.rcvdBytes += update.rcvd_bytes - conn.rcvd_bytes;
-                mMaxBytes = Math.max(mMaxBytes, update.sent_bytes + update.rcvd_bytes);
+                if((update.update_type & ConnectionUpdate.UPDATE_STATS) != 0) {
+                    stats.sentBytes += update.sent_bytes - conn.sent_bytes;
+                    stats.rcvdBytes += update.rcvd_bytes - conn.rcvd_bytes;
+                    mMaxBytes = Math.max(mMaxBytes, update.sent_bytes + update.rcvd_bytes);
+                }
 
                 //Log.d(TAG, "update " + update.incr_id + " -> " + update.update_type);
                 conn.processUpdate(update);
