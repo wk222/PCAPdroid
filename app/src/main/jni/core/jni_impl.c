@@ -188,8 +188,12 @@ static jobject getConnUpdate(pcapdroid_t *pd, const conn_and_tuple_t *conn) {
             (*env)->CallVoidMethod(env, update, mids.connUpdateSetMetrics,
                                    data->tcp_rtt_ms,
                                    data->connect_time_ms,
+                                   data->tls_setup_ms,
                                    data->server_wait_ms,
-                                   data->retransmits);
+                                   data->retransmits,
+                                   data->dup_ack_count,
+                                   data->rst_count,
+                                   data->zero_window_count);
             failed = jniCheckException(env);
         }
     }
@@ -638,7 +642,7 @@ static void init_jni(JNIEnv *env) {
     mids.connProcessUpdate = jniGetMethodID(env, cls.conn, "processUpdate", "(Lcom/emanuelef/remote_capture/model/ConnectionUpdate;)V");
     mids.connUpdateInit = jniGetMethodID(env, cls.conn_update, "<init>", "(I)V");
     mids.connUpdateSetStats = jniGetMethodID(env, cls.conn_update, "setStats", "(JJJJIIIII)V");
-    mids.connUpdateSetMetrics = jniGetMethodID(env, cls.conn_update, "setMetrics", "(IIII)V");
+    mids.connUpdateSetMetrics = jniGetMethodID(env, cls.conn_update, "setMetrics", "(IIIIIIII)V");
     mids.connUpdateSetInfo = jniGetMethodID(env, cls.conn_update, "setInfo", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
     mids.connUpdateSetPayload = jniGetMethodID(env, cls.conn_update, "setPayload", "(Ljava/util/ArrayList;I)V");
     mids.statsInit = jniGetMethodID(env, cls.stats, "<init>", "()V");

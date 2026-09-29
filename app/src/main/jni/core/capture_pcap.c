@@ -346,9 +346,33 @@ static void update_connection_status(pcapdroid_t *pd, pcap_conn_t *conn, zdtun_p
       struct tcphdr *tcp = pkt->tcp;
       uint8_t flags = tcp->th_flags;
       uint32_t seq = ntohl(tcp->th_seq);
+      uint32_t ack_seq = ntohl(tcp->th_ack);
+      uint16_t win = ntohs(tcp->th_win);
 
       data->tcp_flags[dir] |= flags;
       uint8_t seen_flags = data->tcp_flags[0] & data->tcp_flags[1];
+
+      // Track RST
+      if(flags & TH_RST) {
+          data->rst_count++;
+          data->update_type |= CONN_UPDATE_METRICS;
+      }
+
+      // Track Zero Window (exclude SYN/RST)
+      if(win == 0 && !(flags & (TH_SYN | TH_RST))) {
+          data->zero_window_count++;
+          data->update_type |= CONN_UPDATE_METRICS;
+      }
+
+      // Track Dup ACK
+      if((flags & TH_ACK) && !(flags & (TH_SYN | TH_FIN | TH_RST)) && pkt->l7_len == 0) {
+          if(ack_seq > 0 && data->last_ack_seq[dir] == ack_seq && data->last_win[dir] == win) {
+              data->dup_ack_count++;
+              data->update_type |= CONN_UPDATE_METRICS;
+          }
+          data->last_ack_seq[dir] = ack_seq;
+          data->last_win[dir] = win;
+      }
 
       // RTT / timing: hotspot & @inet capture may mis-classify TX/RX; handshake is direction-agnostic.
       if((flags & TH_SYN) && !(flags & TH_ACK)) {
@@ -367,6 +391,31 @@ static void update_connection_status(pcapdroid_t *pd, pcap_conn_t *conn, zdtun_p
           if((seen_flags & syn_ack_flags) == syn_ack_flags) {
               data->connect_time_ms = (int32_t)(pkt_ms - data->syn_ts_ms);
               data->update_type |= CONN_UPDATE_METRICS;
+          }
+      }
+
+      // TLS Setup timing inspection (record layer: 0x16 0x03)
+      if(pkt->l7_len >= 6) {
+          const uint8_t *l7 = (const uint8_t*) pkt->l7;
+          if(l7[0] == 0x16 && l7[1] == 0x03) {
+              // 0x01 = Client Hello
+              if(l7[5] == 0x01 && data->tls_start_ms == 0) {
+                  data->tls_start_ms = pkt_ms;
+              }
+          } else if(l7[0] == 0x17 && l7[1] == 0x03) {
+              // 0x17 = Application Data (TLS handshake complete)
+              if(data->tls_start_ms > 0 && data->tls_setup_ms < 0) {
+                  data->tls_setup_ms = (int32_t)(pkt_ms - data->tls_start_ms);
+                  data->update_type |= CONN_UPDATE_METRICS;
+              }
+          }
+      } else if(pkt->l7_len >= 5) {
+          const uint8_t *l7 = (const uint8_t*) pkt->l7;
+          if(l7[0] == 0x17 && l7[1] == 0x03) {
+              if(data->tls_start_ms > 0 && data->tls_setup_ms < 0) {
+                  data->tls_setup_ms = (int32_t)(pkt_ms - data->tls_start_ms);
+                  data->update_type |= CONN_UPDATE_METRICS;
+              }
           }
       }
 

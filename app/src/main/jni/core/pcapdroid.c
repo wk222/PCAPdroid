@@ -592,10 +592,21 @@ pd_conn_t* pd_new_connection(pcapdroid_t *pd, const zdtun_5tuple_t *tuple, int u
     data->uid = uid;
     data->incr_id = pd->new_conn_id++;
     data->tcp_client_dir = -1;
+    data->syn_ts_ms = 0;
+    data->last_client_req_ms = 0;
+    data->tls_start_ms = 0;
+    data->client_max_seq = 0;
+    data->server_max_seq = 0;
+    data->last_ack_seq[0] = data->last_ack_seq[1] = 0;
+    data->last_win[0] = data->last_win[1] = 0;
     data->tcp_rtt_ms = -1;
     data->connect_time_ms = -1;
+    data->tls_setup_ms = -1;
     data->server_wait_ms = -1;
     data->retransmits = 0;
+    data->dup_ack_count = 0;
+    data->rst_count = 0;
+    data->zero_window_count = 0;
 
     if(pd->malware_detection.whitelist) {
         // NOTE: if app is whitelisted, no need to check for blacklisted IP/domains

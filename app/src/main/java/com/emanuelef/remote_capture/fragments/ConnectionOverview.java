@@ -49,6 +49,7 @@ import com.emanuelef.remote_capture.activities.MainActivity;
 import com.emanuelef.remote_capture.activities.MenuActionHandler;
 import com.emanuelef.remote_capture.model.AppDescriptor;
 import com.emanuelef.remote_capture.model.ConnectionDescriptor;
+import com.emanuelef.remote_capture.views.ConnectionTimelineView;
 import com.haipq.android.flagkit.FlagImageView;
 
 public class ConnectionOverview extends Fragment implements ConnectionDetailsActivity.ConnUpdateListener, MenuActionHandler {
@@ -75,14 +76,29 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
     private ImageView mBlacklistedIp;
     private ImageView mBlacklistedHost;
 
+    private View mExpertCard;
+    private TextView mExpertTitle;
+    private TextView mExpertDesc;
+    private View mTimelineCard;
+    private ConnectionTimelineView mTimelineView;
+
     private TextView mTcpRttView;
     private TextView mConnectTimeView;
+    private TextView mTlsSetupView;
     private TextView mServerWaitView;
     private TextView mRetransmitsView;
+    private TextView mDupAcksView;
+    private TextView mRstView;
+    private TextView mZeroWindowsView;
+
     private View mTcpRttRow;
     private View mConnectTimeRow;
+    private View mTlsSetupRow;
     private View mServerWaitRow;
     private View mRetransmitsRow;
+    private View mDupAcksRow;
+    private View mRstRow;
+    private View mZeroWindowsRow;
 
     public static ConnectionOverview newInstance(int conn_id) {
         ConnectionOverview fragment = new ConnectionOverview();
@@ -146,14 +162,29 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
         mBlacklistedIp = view.findViewById(R.id.blacklisted_ip);
         mBlacklistedHost = view.findViewById(R.id.blacklisted_host);
 
+        mExpertCard = view.findViewById(R.id.expert_card);
+        mExpertTitle = view.findViewById(R.id.expert_title);
+        mExpertDesc = view.findViewById(R.id.expert_desc);
+        mTimelineCard = view.findViewById(R.id.timeline_card);
+        mTimelineView = view.findViewById(R.id.connection_timeline);
+
         mTcpRttView = view.findViewById(R.id.detail_tcp_rtt);
         mConnectTimeView = view.findViewById(R.id.detail_connect_time);
+        mTlsSetupView = view.findViewById(R.id.detail_tls_setup);
         mServerWaitView = view.findViewById(R.id.detail_server_wait);
         mRetransmitsView = view.findViewById(R.id.detail_retransmits);
+        mDupAcksView = view.findViewById(R.id.detail_dup_acks);
+        mRstView = view.findViewById(R.id.detail_rst);
+        mZeroWindowsView = view.findViewById(R.id.detail_zero_windows);
+
         mTcpRttRow = view.findViewById(R.id.detail_tcp_rtt_row);
         mConnectTimeRow = view.findViewById(R.id.detail_connect_time_row);
+        mTlsSetupRow = view.findViewById(R.id.detail_tls_setup_row);
         mServerWaitRow = view.findViewById(R.id.detail_server_wait_row);
         mRetransmitsRow = view.findViewById(R.id.detail_retransmits_row);
+        mDupAcksRow = view.findViewById(R.id.detail_dup_acks_row);
+        mRstRow = view.findViewById(R.id.detail_rst_row);
+        mZeroWindowsRow = view.findViewById(R.id.detail_zero_windows_row);
 
         Bundle args = getArguments();
         assert args != null;
@@ -307,6 +338,22 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
             mBlockedPktsRow.setVisibility(View.VISIBLE);
         }
 
+        ConnectionDescriptor.Diagnosis diag = mConn.getExpertDiagnosis();
+        if(diag != null) {
+            mExpertCard.setVisibility(View.VISIBLE);
+            mExpertTitle.setText(diag.title);
+            mExpertDesc.setText(diag.description);
+        } else {
+            mExpertCard.setVisibility(View.GONE);
+        }
+
+        if(mConn.tcp_connect_time > 0 || mConn.tls_setup > 0 || mConn.server_wait > 0) {
+            mTimelineCard.setVisibility(View.VISIBLE);
+            mTimelineView.setTimingData(mConn.tcp_connect_time, mConn.tls_setup, mConn.server_wait);
+        } else {
+            mTimelineCard.setVisibility(View.GONE);
+        }
+
         mDurationView.setText(Utils.formatDuration(context, (mConn.last_seen - mConn.first_seen) / 1000));
 
         if(mConn.tcp_rtt >= 0) {
@@ -321,6 +368,13 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
             mConnectTimeRow.setVisibility(View.VISIBLE);
         } else {
             mConnectTimeRow.setVisibility(View.GONE);
+        }
+
+        if(mConn.tls_setup >= 0) {
+            mTlsSetupView.setText(mConn.tls_setup + " ms");
+            mTlsSetupRow.setVisibility(View.VISIBLE);
+        } else {
+            mTlsSetupRow.setVisibility(View.GONE);
         }
 
         if(mConn.server_wait >= 0) {
@@ -338,6 +392,27 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
             mRetransmitsRow.setVisibility(View.VISIBLE);
         } else {
             mRetransmitsRow.setVisibility(View.GONE);
+        }
+
+        if(mConn.dup_acks > 0) {
+            mDupAcksView.setText(mConn.dup_acks + " 次");
+            mDupAcksRow.setVisibility(View.VISIBLE);
+        } else {
+            mDupAcksRow.setVisibility(View.GONE);
+        }
+
+        if(mConn.rst_count > 0) {
+            mRstView.setText(mConn.rst_count + " 次");
+            mRstRow.setVisibility(View.VISIBLE);
+        } else {
+            mRstRow.setVisibility(View.GONE);
+        }
+
+        if(mConn.zero_windows > 0) {
+            mZeroWindowsView.setText(mConn.zero_windows + " 次");
+            mZeroWindowsRow.setVisibility(View.VISIBLE);
+        } else {
+            mZeroWindowsRow.setVisibility(View.GONE);
         }
 
         mFirstSeen.setText(Utils.formatEpochMillis(mActivity, mConn.first_seen));

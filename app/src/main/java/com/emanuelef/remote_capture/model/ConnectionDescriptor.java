@@ -103,8 +103,12 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
     /* Data */
     public int tcp_rtt = -1;
     public int tcp_connect_time = -1;
+    public int tls_setup = -1;
     public int server_wait = -1;
     public int retransmits = 0;
+    public int dup_acks = 0;
+    public int rst_count = 0;
+    public int zero_windows = 0;
     public long first_seen;
     public long last_seen;
     public long payload_length;
@@ -178,8 +182,12 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
         if((update.update_type & ConnectionUpdate.UPDATE_METRICS) != 0) {
             tcp_rtt = update.tcp_rtt;
             tcp_connect_time = update.tcp_connect_time;
+            tls_setup = update.tls_setup;
             server_wait = update.server_wait;
             retransmits = update.retransmits;
+            dup_acks = update.dup_acks;
+            rst_count = update.rst_count;
+            zero_windows = update.zero_windows;
         }
         if((update.update_type & ConnectionUpdate.UPDATE_STATS) != 0) {
             sent_bytes = update.sent_bytes;
@@ -601,6 +609,53 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
 
     public boolean isHotspotClient() {
         return uid <= 0 && (src_ip.startsWith("192.168.") || src_ip.startsWith("10.") || src_ip.startsWith("172."));
+    }
+
+    public static class Diagnosis {
+        public enum Level { OK, WARNING, ERROR }
+        public final Level level;
+        public final String title;
+        public final String description;
+
+        public Diagnosis(Level level, String title, String description) {
+            this.level = level;
+            this.title = title;
+            this.description = description;
+        }
+    }
+
+    public @Nullable Diagnosis getExpertDiagnosis() {
+        if(zero_windows > 0) {
+            return new Diagnosis(Diagnosis.Level.ERROR,
+                    "🛑 终端接收缓冲区打满 (Zero Window)",
+                    String.format(java.util.Locale.US, "出现 %d 次零窗口通知！收银机/终端主动通知对端停止发包，设备 CPU 或软件层可能卡死堵塞。", zero_windows));
+        }
+        if(rst_count > 0) {
+            return new Diagnosis(Diagnosis.Level.ERROR,
+                    "🚫 连接被异常复位 (TCP RST)",
+                    String.format(java.util.Locale.US, "收到 %d 次强制 RST 复位包！连接被对端服务或防火墙主动切断，请检查端口监听或超时策略。", rst_count));
+        }
+        if(retransmits >= 3 || dup_acks >= 5) {
+            return new Diagnosis(Diagnosis.Level.WARNING,
+                    "⚠️ 物理/无线链路丢包重传 (Retransmit / Dup ACK)",
+                    String.format(java.util.Locale.US, "检测到重传 %d 次、重复确认 %d 次，多因 4G/5G 弱信号、网线接触不良或 Wi-Fi 同频干扰导致。", retransmits, dup_acks));
+        }
+        if(server_wait >= 2000 && retransmits == 0) {
+            return new Diagnosis(Diagnosis.Level.WARNING,
+                    "🚨 服务端响应缓慢 (Server Wait / TTFB)",
+                    String.format(java.util.Locale.US, "网络握手迅捷且无丢包，但业务响应等待耗时 %.2f 秒，问题瓶颈在云端后台或银行收单接口。", server_wait / 1000.0f));
+        }
+        if(tcp_rtt >= 200) {
+            return new Diagnosis(Diagnosis.Level.WARNING,
+                    "🐢 物理信道延迟偏高 (High RTT)",
+                    String.format(java.util.Locale.US, "初始物理握手往返延迟达 %d ms，终端当前移动基站物理传输时延偏大。", tcp_rtt));
+        }
+        if(tcp_connect_time > 0 || server_wait > 0) {
+            return new Diagnosis(Diagnosis.Level.OK,
+                    "✅ 链路网络质量良好",
+                    "TCP 握手及业务往返时延正常，未出现丢包重传与异常复位。");
+        }
+        return null;
     }
 
     @Override

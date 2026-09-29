@@ -33,8 +33,12 @@ public class ConnectionUpdate {
     /* set if update_type & UPDATE_METRICS */
     public int tcp_rtt = -1;
     public int tcp_connect_time = -1;
+    public int tls_setup = -1;
     public int server_wait = -1;
     public int retransmits = 0;
+    public int dup_acks = 0;
+    public int rst_count = 0;
+    public int zero_windows = 0;
 
     /* set if update_type & UPDATE_STATS */
     public long last_seen;
@@ -95,12 +99,17 @@ public class ConnectionUpdate {
         payload_decrypted = (flags & 0x2) != 0;
     }
 
-    public void setMetrics(int _tcp_rtt, int _tcp_connect_time, int _server_wait, int _retransmits) {
+    public void setMetrics(int _tcp_rtt, int _tcp_connect_time, int _tls_setup, int _server_wait,
+                           int _retransmits, int _dup_acks, int _rst_count, int _zero_windows) {
         update_type |= UPDATE_METRICS;
 
         tcp_rtt = _tcp_rtt;
         tcp_connect_time = _tcp_connect_time;
+        tls_setup = _tls_setup;
         server_wait = _server_wait;
         retransmits = _retransmits;
+        dup_acks = _dup_acks;
+        rst_count = _rst_count;
+        zero_windows = _zero_windows;
     }
 }

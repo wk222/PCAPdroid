@@ -140,12 +140,19 @@ typedef struct {
     int8_t tcp_client_dir; /* 0/1: which dir is the TCP client; -1 unknown */
     uint64_t syn_ts_ms;
     uint64_t last_client_req_ms;
+    uint64_t tls_start_ms;
     uint32_t client_max_seq;
     uint32_t server_max_seq;
+    uint32_t last_ack_seq[2];
+    uint16_t last_win[2];
     int32_t tcp_rtt_ms;
     int32_t connect_time_ms;
+    int32_t tls_setup_ms;
     int32_t server_wait_ms;
     int32_t retransmits;
+    int32_t dup_ack_count;
+    int32_t rst_count;
+    int32_t zero_window_count;
 } pd_conn_t;
 
 typedef struct {

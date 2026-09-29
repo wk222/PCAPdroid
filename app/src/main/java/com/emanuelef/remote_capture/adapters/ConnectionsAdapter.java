@@ -141,6 +141,8 @@ public class ConnectionsAdapter extends RecyclerView.Adapter<ConnectionsAdapter.
                 l7Text = l7Text + " | RTT " + conn.tcp_rtt + "ms";
             if(conn.tcp_connect_time >= 0)
                 l7Text = l7Text + " | 握手 " + conn.tcp_connect_time + "ms";
+            if(conn.tls_setup >= 0)
+                l7Text = l7Text + " | TLS " + conn.tls_setup + "ms";
             if(conn.server_wait >= 0) {
                 if(conn.server_wait >= 1000)
                     l7Text = l7Text + String.format(java.util.Locale.US, " | 等待 %.1fs", conn.server_wait / 1000.0f);
@@ -149,6 +151,10 @@ public class ConnectionsAdapter extends RecyclerView.Adapter<ConnectionsAdapter.
             }
             if(conn.retransmits > 0)
                 l7Text = l7Text + " | 重传:" + conn.retransmits;
+            if(conn.rst_count > 0)
+                l7Text = l7Text + " | RST";
+            if(conn.zero_windows > 0)
+                l7Text = l7Text + " | 零窗";
 
             l7proto.setText(l7Text);
 

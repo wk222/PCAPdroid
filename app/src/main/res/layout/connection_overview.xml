@@ -12,12 +12,69 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+    <!-- 专家一句话诊断卡片 (Expert Card) -->
+    <LinearLayout
+        android:id="@+id/expert_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/rounded_border"
+        android:padding="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/expert_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            tools:text="🚨 服务端处理缓慢 (Server Wait)" />
+
+        <TextView
+            android:id="@+id/expert_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            tools:text="网络握手迅捷无丢包，但业务响应等待耗时 2.81 秒，多为收单后台或云服务接口瓶颈。" />
+    </LinearLayout>
+
+    <!-- 网络时序甘特图 (Timeline Card) -->
+    <LinearLayout
+        android:id="@+id/timeline_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/rounded_border"
+        android:padding="10dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/expert_card">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="网络时序图 (Connection Timeline)"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="4dp" />
+
+        <com.emanuelef.remote_capture.views.ConnectionTimelineView
+            android:id="@+id/connection_timeline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
     <TableLayout
         android:id="@+id/table"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/timeline_card">
 
         <TableRow
             android:layout_width="match_parent"
@@ -579,6 +636,28 @@
         </TableRow>
 
         <TableRow
+            android:id="@+id/detail_tls_setup_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="TLS 握手耗时" />
+            <TextView
+                android:id="@+id/detail_tls_setup"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="61 ms" />
+        </TableRow>
+
+        <TableRow
             android:id="@+id/detail_server_wait_row"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -614,6 +693,72 @@
                 android:text="报文重传数" />
             <TextView
                 android:id="@+id/detail_retransmits"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="0" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/detail_dup_acks_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="重复确认 (Dup ACK)" />
+            <TextView
+                android:id="@+id/detail_dup_acks"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="0" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/detail_rst_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="TCP RST 复位" />
+            <TextView
+                android:id="@+id/detail_rst"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="0" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/detail_zero_windows_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="零窗口 (Zero Window)" />
+            <TextView
+                android:id="@+id/detail_zero_windows"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.75"
