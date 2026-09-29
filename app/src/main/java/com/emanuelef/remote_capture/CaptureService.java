@@ -1315,7 +1315,10 @@ public class CaptureService extends VpnService implements Runnable {
             // Check for INTERACT_ACROSS_USERS, required to query apps of other users/work profiles
             if(mSettings.root_capture && (checkCallingOrSelfPermission(Utils.INTERACT_ACROSS_USERS) != PackageManager.PERMISSION_GRANTED)) {
                 boolean success = Utils.rootGrantPermission(this, Utils.INTERACT_ACROSS_USERS);
-                mHandler.post(() -> Utils.showToast(this, success ? R.string.permission_granted : R.string.permission_grant_fail, "INTERACT_ACROSS_USERS"));
+                if(success)
+                    mHandler.post(() -> Utils.showToast(this, R.string.permission_granted, "INTERACT_ACROSS_USERS"));
+                else
+                    Log.w(TAG, "INTERACT_ACROSS_USERS not granted (normal on Android 12+ signature restrictions). Capture unaffected.");
             }
 
             runPacketLoop(-1, this, Build.VERSION.SDK_INT);

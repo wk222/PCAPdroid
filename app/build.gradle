@@ -46,8 +46,8 @@ android {
             signingConfig signingConfigs.release
         }
         debug {
-            // Use a different app ID for debug to allow its coexistence with release builds
-            applicationIdSuffix '.debug'
+            // Keep same app ID as release so SukiSU/KernelSU and system permissions align with stock
+            // applicationIdSuffix '.debug'
             versionNameSuffix '-beta'
             pseudoLocalesEnabled = true
 

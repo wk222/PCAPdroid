@@ -1542,7 +1542,24 @@ public class Utils {
 
     @SuppressLint("DefaultLocale")
     public static boolean rootGrantPermission(Context context, String perm) {
-        return CaptureService.rootCmd("pm", String.format("grant --user %d %s %s", getUserId(getPCAPdroidUid(context)), BuildConfig.APPLICATION_ID, perm)) == 0;
+        String pkg = context.getPackageName();
+        int userId = getUserId(getPCAPdroidUid(context));
+        if (userId < 0) userId = 0;
+
+        String grantArgs = String.format("grant --user %d %s %s", userId, pkg, perm);
+        if (CaptureService.rootCmd("pm", grantArgs) == 0)
+            return true;
+
+        // Fallback for KernelSU / SukiSU / APatch via direct su -c
+        try {
+            Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", "pm " + grantArgs});
+            if (p.waitFor() == 0)
+                return true;
+        } catch (Exception e) {
+            Log.w(TAG, "su -c pm grant fallback failed: " + e.getMessage());
+        }
+
+        return false;
     }
 
     // Returns the available dalvik vm heap size for this app. Exceeding this size will result into
