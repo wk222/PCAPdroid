@@ -535,6 +535,94 @@
         </TableRow>
 
         <TableRow
+            android:id="@+id/detail_tcp_rtt_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="网络 RTT" />
+            <TextView
+                android:id="@+id/detail_tcp_rtt"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="34 ms" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/detail_connect_time_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="TCP 建连耗时" />
+            <TextView
+                android:id="@+id/detail_connect_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="38 ms" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/detail_server_wait_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="服务端处理等待" />
+            <TextView
+                android:id="@+id/detail_server_wait"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="1.83 s" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/detail_retransmits_row"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                android:text="报文重传数" />
+            <TextView
+                android:id="@+id/detail_retransmits"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.75"
+                android:textAlignment="viewStart"
+                android:textIsSelectable="true"
+                tools:text="0" />
+        </TableRow>
+
+        <TableRow
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginBottom="4dp">

@@ -25,9 +25,16 @@ public class ConnectionUpdate {
     public static final int UPDATE_STATS = 0x1;
     public static final int UPDATE_INFO = 0x2;
     public static final int UPDATE_PAYLOAD = 0x4;
+    public static final int UPDATE_METRICS = 0x8;
     public static final int UPDATE_INFO_FLAG_ENCRYPTED_L7 = 0x1;
     public final int incr_id;
     public int update_type;
+
+    /* set if update_type & UPDATE_METRICS */
+    public int tcp_rtt = -1;
+    public int tcp_connect_time = -1;
+    public int server_wait = -1;
+    public int retransmits = 0;
 
     /* set if update_type & UPDATE_STATS */
     public long last_seen;
@@ -86,5 +93,14 @@ public class ConnectionUpdate {
         payload_chunks = _chunks;
         payload_truncated = (flags & 0x1) != 0;
         payload_decrypted = (flags & 0x2) != 0;
+    }
+
+    public void setMetrics(int _tcp_rtt, int _tcp_connect_time, int _server_wait, int _retransmits) {
+        update_type |= UPDATE_METRICS;
+
+        tcp_rtt = _tcp_rtt;
+        tcp_connect_time = _tcp_connect_time;
+        server_wait = _server_wait;
+        retransmits = _retransmits;
     }
 }

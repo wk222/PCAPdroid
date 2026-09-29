@@ -75,6 +75,15 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
     private ImageView mBlacklistedIp;
     private ImageView mBlacklistedHost;
 
+    private TextView mTcpRttView;
+    private TextView mConnectTimeView;
+    private TextView mServerWaitView;
+    private TextView mRetransmitsView;
+    private View mTcpRttRow;
+    private View mConnectTimeRow;
+    private View mServerWaitRow;
+    private View mRetransmitsRow;
+
     public static ConnectionOverview newInstance(int conn_id) {
         ConnectionOverview fragment = new ConnectionOverview();
         Bundle args = new Bundle();
@@ -136,6 +145,15 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
         mSocketErrnoInfo = view.findViewById(R.id.error_info);
         mBlacklistedIp = view.findViewById(R.id.blacklisted_ip);
         mBlacklistedHost = view.findViewById(R.id.blacklisted_host);
+
+        mTcpRttView = view.findViewById(R.id.detail_tcp_rtt);
+        mConnectTimeView = view.findViewById(R.id.detail_connect_time);
+        mServerWaitView = view.findViewById(R.id.detail_server_wait);
+        mRetransmitsView = view.findViewById(R.id.detail_retransmits);
+        mTcpRttRow = view.findViewById(R.id.detail_tcp_rtt_row);
+        mConnectTimeRow = view.findViewById(R.id.detail_connect_time_row);
+        mServerWaitRow = view.findViewById(R.id.detail_server_wait_row);
+        mRetransmitsRow = view.findViewById(R.id.detail_retransmits_row);
 
         Bundle args = getArguments();
         assert args != null;
@@ -207,6 +225,8 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
             AppDescriptor app = (new AppsResolver(mActivity)).getAppByUid(mConn.uid, 0);
             if(app != null)
                 appLabel.setText(String.format(getResources().getString(R.string.app_and_proto), app.getName(), uid_str));
+            else if(mConn.isHotspotClient())
+                appLabel.setText("热点设备 [" + mConn.src_ip + "]");
             else
                 appLabel.setText(uid_str);
 
@@ -288,6 +308,38 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
         }
 
         mDurationView.setText(Utils.formatDuration(context, (mConn.last_seen - mConn.first_seen) / 1000));
+
+        if(mConn.tcp_rtt >= 0) {
+            mTcpRttView.setText(mConn.tcp_rtt + " ms");
+            mTcpRttRow.setVisibility(View.VISIBLE);
+        } else {
+            mTcpRttRow.setVisibility(View.GONE);
+        }
+
+        if(mConn.tcp_connect_time >= 0) {
+            mConnectTimeView.setText(mConn.tcp_connect_time + " ms");
+            mConnectTimeRow.setVisibility(View.VISIBLE);
+        } else {
+            mConnectTimeRow.setVisibility(View.GONE);
+        }
+
+        if(mConn.server_wait >= 0) {
+            if(mConn.server_wait >= 1000)
+                mServerWaitView.setText(String.format(java.util.Locale.US, "%.2f s (%d ms)", mConn.server_wait / 1000.0f, mConn.server_wait));
+            else
+                mServerWaitView.setText(mConn.server_wait + " ms");
+            mServerWaitRow.setVisibility(View.VISIBLE);
+        } else {
+            mServerWaitRow.setVisibility(View.GONE);
+        }
+
+        if(mConn.retransmits > 0) {
+            mRetransmitsView.setText(mConn.retransmits + " 次");
+            mRetransmitsRow.setVisibility(View.VISIBLE);
+        } else {
+            mRetransmitsRow.setVisibility(View.GONE);
+        }
+
         mFirstSeen.setText(Utils.formatEpochMillis(mActivity, mConn.first_seen));
         mLastSeen.setText(Utils.formatEpochMillis(mActivity, mConn.last_seen));
         mStatus.setText(mConn.getStatusLabel(mActivity));

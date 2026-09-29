@@ -137,9 +137,27 @@ public class ConnectionsAdapter extends RecyclerView.Adapter<ConnectionsAdapter.
             if(conn.ipver == 6)
                 l7Text = l7Text + ", IPv6";
 
+            if(conn.tcp_rtt >= 0)
+                l7Text = l7Text + " | RTT " + conn.tcp_rtt + "ms";
+            if(conn.server_wait >= 0) {
+                if(conn.server_wait >= 1000)
+                    l7Text = l7Text + String.format(java.util.Locale.US, " | 等待 %.1fs", conn.server_wait / 1000.0f);
+                else
+                    l7Text = l7Text + " | 等待 " + conn.server_wait + "ms";
+            }
+            if(conn.retransmits > 0)
+                l7Text = l7Text + " | 重传:" + conn.retransmits;
+
             l7proto.setText(l7Text);
 
-            String info_txt = (app != null) ? app.getName() : Integer.toString(conn.uid);
+            String info_txt;
+            if(app != null)
+                info_txt = app.getName();
+            else if(conn.isHotspotClient())
+                info_txt = "热点设备 [" + conn.src_ip + "]";
+            else
+                info_txt = Integer.toString(conn.uid);
+
             appName.setText(info_txt);
             traffic.setText(Utils.formatBytes(conn.sent_bytes + conn.rcvd_bytes));
             lastSeen.setText(Utils.formatEpochShort(context, conn.last_seen / 1000));

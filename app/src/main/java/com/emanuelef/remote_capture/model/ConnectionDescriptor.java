@@ -101,6 +101,10 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
     public final int local_port; // in VPN mode, this is the local port of the Internet connection
 
     /* Data */
+    public int tcp_rtt = -1;
+    public int tcp_connect_time = -1;
+    public int server_wait = -1;
+    public int retransmits = 0;
     public long first_seen;
     public long last_seen;
     public long payload_length;
@@ -171,6 +175,12 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
     // NOTE: invoked from either JNI (dumpNewConnection) or ConnectionsRegister
     public void processUpdate(ConnectionUpdate update) {
         // The "update_type" is used to limit the amount of data sent via the JNI
+        if((update.update_type & ConnectionUpdate.UPDATE_METRICS) != 0) {
+            tcp_rtt = update.tcp_rtt;
+            tcp_connect_time = update.tcp_connect_time;
+            server_wait = update.server_wait;
+            retransmits = update.retransmits;
+        }
         if((update.update_type & ConnectionUpdate.UPDATE_STATS) != 0) {
             sent_bytes = update.sent_bytes;
             rcvd_bytes = update.rcvd_bytes;
@@ -587,6 +597,10 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
             return true;
 
         return (getSentTcpFlags() & 0x2) != 0; // SYN
+    }
+
+    public boolean isHotspotClient() {
+        return uid <= 0 && (src_ip.startsWith("192.168.") || src_ip.startsWith("10.") || src_ip.startsWith("172."));
     }
 
     @Override

@@ -591,6 +591,10 @@ pd_conn_t* pd_new_connection(pcapdroid_t *pd, const zdtun_5tuple_t *tuple, int u
 
     data->uid = uid;
     data->incr_id = pd->new_conn_id++;
+    data->tcp_rtt_ms = -1;
+    data->connect_time_ms = -1;
+    data->server_wait_ms = -1;
+    data->retransmits = 0;
 
     if(pd->malware_detection.whitelist) {
         // NOTE: if app is whitelisted, no need to check for blacklisted IP/domains

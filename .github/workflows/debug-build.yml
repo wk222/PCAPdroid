@@ -1,6 +1,9 @@
 name: Debug build
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
    
 jobs:
   build:
@@ -18,3 +21,10 @@ jobs:
         
     - run: ./gradlew test
     - run: ./gradlew assembleStandardDebug -PdoNotStrip
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: PCAPdroid-Hotspot-RTT-Debug-apk
+        path: app/build/outputs/apk/**/*.apk
+        retention-days: 14

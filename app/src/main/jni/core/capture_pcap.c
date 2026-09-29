@@ -333,8 +333,8 @@ static void remove_connection(pcapdroid_t *pd, pcap_conn_t *conn) {
 
 /* ******************************************************* */
 
-// Determines when a connection gets closed
-static void update_connection_status(pcapdroid_t *pd, pcap_conn_t *conn, zdtun_pkt_t *pkt, uint8_t dir) {
+// Determines when a connection gets closed and tracks RTT & transaction metrics
+static void update_connection_status(pcapdroid_t *pd, pcap_conn_t *conn, zdtun_pkt_t *pkt, uint8_t dir, uint64_t pkt_ms) {
   // NOTE: pcap_conn_t needed below in remove_connection
   if((conn->data->status >= CONN_STATUS_CLOSED) || (pkt->flags & ZDTUN_PKT_IS_FRAGMENT))
       return;
@@ -344,17 +344,68 @@ static void update_connection_status(pcapdroid_t *pd, pcap_conn_t *conn, zdtun_p
 
   if(tuple->ipproto == IPPROTO_TCP) {
       struct tcphdr *tcp = pkt->tcp;
+      uint8_t flags = tcp->th_flags;
+      uint32_t seq = ntohl(tcp->th_seq);
 
-      data->tcp_flags[dir] |= tcp->th_flags;
+      data->tcp_flags[dir] |= flags;
       uint8_t seen_flags = data->tcp_flags[0] & data->tcp_flags[1];
 
-      if(tcp->th_flags & TH_RST)
+      // RTT and timing tracking:
+      // dir == 0: client -> server
+      // dir == 1: server -> client
+      if(dir == 0) {
+          // Client SYN
+          if((flags & TH_SYN) && !(flags & TH_ACK)) {
+              data->syn_ts_ms = pkt_ms;
+          }
+          // Client final ACK of 3-way handshake
+          else if((flags & TH_ACK) && data->connect_time_ms < 0 && data->syn_ts_ms > 0) {
+              data->connect_time_ms = (int32_t)(pkt_ms - data->syn_ts_ms);
+              data->update_type |= CONN_UPDATE_METRICS;
+          }
+
+          // Client request with application payload
+          if(pkt->l7_len > 0) {
+              data->last_client_req_ms = pkt_ms;
+              if(data->client_max_seq > 0 && seq < data->client_max_seq) {
+                  data->retransmits++;
+                  data->update_type |= CONN_UPDATE_METRICS;
+              } else if(seq > data->client_max_seq) {
+                  data->client_max_seq = seq;
+              }
+          }
+      } else {
+          // Server SYN+ACK response to SYN
+          if((flags & (TH_SYN | TH_ACK)) == (TH_SYN | TH_ACK)) {
+              if(data->syn_ts_ms > 0 && data->tcp_rtt_ms < 0) {
+                  data->tcp_rtt_ms = (int32_t)(pkt_ms - data->syn_ts_ms);
+                  data->update_type |= CONN_UPDATE_METRICS;
+              }
+          }
+
+          // Server response with payload after client request (TTFB / Server wait)
+          if(pkt->l7_len > 0) {
+              if(data->last_client_req_ms > 0) {
+                  data->server_wait_ms = (int32_t)(pkt_ms - data->last_client_req_ms);
+                  data->last_client_req_ms = 0; // Handled this transaction
+                  data->update_type |= CONN_UPDATE_METRICS;
+              }
+              if(data->server_max_seq > 0 && seq < data->server_max_seq) {
+                  data->retransmits++;
+                  data->update_type |= CONN_UPDATE_METRICS;
+              } else if(seq > data->server_max_seq) {
+                  data->server_max_seq = seq;
+              }
+          }
+      }
+
+      if(flags & TH_RST)
           data->status = CONN_STATUS_RESET;
       else if(seen_flags & TH_FIN) {
           // closed when both the peers have sent FIN and the last FIN was acknowledged
           if(!data->last_ack)
               data->last_ack = true; // wait for the last ACK
-          else if(tcp->th_flags & TH_ACK)
+          else if(flags & TH_ACK)
               data->status = CONN_STATUS_CLOSED;
       } else if(data->status < CONN_STATUS_CONNECTED) {
           const uint8_t syn_ack_flags = TH_SYN | TH_ACK;
@@ -375,10 +426,16 @@ static void update_connection_status(pcapdroid_t *pd, pcap_conn_t *conn, zdtun_p
             (tuple->dst_port == ntohs(53))) {
           const dns_packet_t *dns = (dns_packet_t *)pkt->l7;
 
-          if((dns->flags & DNS_FLAGS_MASK) == DNS_TYPE_REQUEST)
+          if((dns->flags & DNS_FLAGS_MASK) == DNS_TYPE_REQUEST) {
               data->pending_dns_queries++;
-          else if((dns->flags & DNS_FLAGS_MASK) == DNS_TYPE_RESPONSE) {
+              data->syn_ts_ms = pkt_ms;
+          } else if((dns->flags & DNS_FLAGS_MASK) == DNS_TYPE_RESPONSE) {
               data->pending_dns_queries--;
+              if(data->syn_ts_ms > 0 && data->tcp_rtt_ms < 0) {
+                  data->tcp_rtt_ms = (int32_t)(pkt_ms - data->syn_ts_ms);
+                  data->connect_time_ms = data->tcp_rtt_ms;
+                  data->update_type |= CONN_UPDATE_METRICS;
+              }
 
               // Close the connection as soon as all the responses arrive
               if(data->pending_dns_queries == 0) {
@@ -610,7 +667,7 @@ static bool handle_packet(pcapdroid_t *pd, pcapd_hdr_t *hdr, const char *buffer,
     pd_process_packet(pd, &pinfo);
 
     // NOTE: this may free the conn
-    update_connection_status(pd, conn, &pkt, !is_tx);
+    update_connection_status(pd, conn, &pkt, !is_tx, pinfo.ms);
 
     pd_account_stats(pd, &pinfo);
 

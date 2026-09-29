@@ -48,6 +48,7 @@
 #define CONN_UPDATE_STATS   0x1
 #define CONN_UPDATE_INFO    0x2
 #define CONN_UPDATE_PAYLOAD 0x4
+#define CONN_UPDATE_METRICS 0x8
 
 typedef struct {
     jlong sent_bytes;
@@ -134,6 +135,16 @@ typedef struct {
     bool has_decrypted_data;
     char *url;
     uint8_t update_type;
+
+    /* RTT and timing metrics */
+    uint64_t syn_ts_ms;
+    uint64_t last_client_req_ms;
+    uint32_t client_max_seq;
+    uint32_t server_max_seq;
+    int32_t tcp_rtt_ms;
+    int32_t connect_time_ms;
+    int32_t server_wait_ms;
+    int32_t retransmits;
 } pd_conn_t;
 
 typedef struct {
@@ -351,6 +362,7 @@ typedef struct {
     jmethodID connProcessUpdate;
     jmethodID connUpdateInit;
     jmethodID connUpdateSetStats;
+    jmethodID connUpdateSetMetrics;
     jmethodID connUpdateSetInfo;
     jmethodID connUpdateSetPayload;
     jmethodID sendServiceStatus;
