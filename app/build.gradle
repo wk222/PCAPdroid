@@ -109,7 +109,7 @@ android {
 androidComponents {
     onVariants(selector().all()) { variant ->
         variant.outputs.each { output ->
-            output.outputFileName.set("手机抓包工具-${variant.versionName.get()}-${variant.name}.apk")
+            output.outputFileName.set("手机抓包工具-${variant.name}.apk")
         }
     }
 }
