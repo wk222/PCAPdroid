@@ -215,8 +215,9 @@ int start_subprocess(const char *prog, const char *args, bool as_root, int* out_
 
     if((pid = fork()) == 0) {
         // child
-        // Ensure su is resolvable across Magisk, KernelSU, SukiSU, and APatch environments
-        char *argp[] = {"sh", "-c", as_root ? "PATH=$PATH:/system/bin:/system/xbin:/sbin:/data/adb/ksu/bin:/data/adb/ap/bin su" : "sh", NULL};
+        // NOTE: do not prepend/append custom PATH entries here: this was tried and reverted
+        // (53e6712), plain "su" is the known-good invocation for Magisk/KernelSU/SukiSU
+        char *argp[] = {"sh", "-c", as_root ? "su" : "sh", NULL};
 
         close(in_p[1]);
         dup2(in_p[0], STDIN_FILENO);

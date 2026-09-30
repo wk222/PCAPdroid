@@ -1771,6 +1771,13 @@ public class CaptureService extends VpnService implements Runnable {
             mDumpQueue.offer(new byte[0]);
     }
 
+    // Diagnostic info appended to root-start errors: tells which package/UID the root manager
+    // (Magisk/KernelSU/SukiSU) must have granted. A reinstall assigns a new UID and drops the grant.
+    private String rootDiagSuffix() {
+        return "\n[包名 " + getPackageName() + " | UID " + android.os.Process.myUid() +
+                " | 请在 SukiSU/KernelSU 超级用户列表确认该应用已授权]";
+    }
+
     public void reportError(String msg) {
         HAS_ERROR = true;
 
@@ -1796,11 +1803,11 @@ public class CaptureService extends VpnService implements Runnable {
                     break;
                 case "pcapd daemon start failure":
                     if(mSettings.root_capture)
-                        err = getString(R.string.root_capture_pcapd_start_failure);
+                        err = getString(R.string.root_capture_pcapd_start_failure) + rootDiagSuffix();
                     break;
                 case "pcapd daemon did not spawn":
                     if(mSettings.root_capture)
-                        err = getString(R.string.root_capture_start_failed);
+                        err = getString(R.string.root_capture_start_failed) + rootDiagSuffix();
                     break;
                 case "PCAP/Pcapng read error":
                     err = getString(R.string.pcap_read_error);
